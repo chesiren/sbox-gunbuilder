@@ -1419,7 +1419,7 @@
   "__version": 1,
   "__references": [
     "facepunch.v_mp5",
-    "facepunch.v_mp5_magazine",
+    "facepunch.v_mp5_magazine#144168",
     "facepunch.w_mp5"
   ]
 }

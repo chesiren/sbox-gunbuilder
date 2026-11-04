@@ -5,34 +5,34 @@
 public partial class LaserPointerComponent : Component, Component.ExecuteInEditor
 {
 	/// <summary>
-	/// The particle system for the laser line.
-	/// </summary>
-	[Property] public Sandbox.ParticleSystem LineParticle { get; set; }
-
-	/// <summary>
-	/// The particle system for the laser dot.
-	/// </summary>
-	[Property] public Sandbox.ParticleSystem DotParticle { get; set; }
-
-	/// <summary>
 	/// The color of the laser.
 	/// </summary>
 	[Property] public Color LaserColor { get; set; }
 
 	/// <summary>
-	/// Reference to the line particle system instance.
+	/// Width of the laser line.
 	/// </summary>
-	LegacyParticleSystem LineParticleSystem { get; set; }
+	[Property] public float LineWidth { get; set; } = 0.05f;
 
 	/// <summary>
-	/// Reference to the dot particle system instance.
+	/// Diameter of the laser dot.
 	/// </summary>
-	LegacyParticleSystem DotParticleSystem { get; set; }
+	[Property] public float DotSize { get; set; } = 0.6f;
+
+	/// <summary>
+	/// Renders the laser line.
+	/// </summary>
+	LineRenderer LineRenderer { get; set; }
+
+	/// <summary>
+	/// Renders the laser dot.
+	/// </summary>
+	LineRenderer DotRenderer { get; set; }
 
 	/// <summary>
 	/// Is this thing on? Handles turning on the line and dot.
 	/// </summary>
-	[Property, MakeDirty] public bool IsEnabled { get; set; } = true;
+	[Property, Change( nameof( OnIsEnabledChanged ) )] public bool IsEnabled { get; set; } = true;
 
 	/// <summary>
 	/// A reference to the grab point that we want to respond to input events for.
@@ -45,47 +45,17 @@ public partial class LaserPointerComponent : Component, Component.ExecuteInEdito
 	TimeSince TimeSinceToggled { get; set; } = 1;
 
 	/// <summary>
-	/// The control point setup for the line particle system.
-	/// </summary>
-	private List<ParticleControlPoint> LineCPs
-	{
-		get
-		{
-			return new()
-			{
-				new() { StringCP = "0", Value = ParticleControlPoint.ControlPointValueInput.Vector3, VectorValue = WorldPosition },
-				new() { StringCP = "1", Value = ParticleControlPoint.ControlPointValueInput.Vector3, VectorValue = GetTraceEnd() },
-				new() { StringCP = "2", Value = ParticleControlPoint.ControlPointValueInput.Vector3, VectorValue = new( LaserColor.r, LaserColor.g, LaserColor.b )  },
-			};
-		}
-	}
-
-	/// <summary>
-	/// The control point setup for the dot particle system.
-	/// </summary>
-	private List<ParticleControlPoint> DotCPs
-	{
-		get
-		{
-			return new()
-			{
-				new() { StringCP = "0", Value = ParticleControlPoint.ControlPointValueInput.Vector3, VectorValue = GetTraceEnd() },
-				new() { StringCP = "2", Value = ParticleControlPoint.ControlPointValueInput.Vector3, VectorValue = new( LaserColor.r, LaserColor.g, LaserColor.b )  },
-			};
-		}
-	}
-
-	/// <summary>
 	/// How far forward do laser pointers go?
 	/// </summary>
 	const float Dist = 100000;
 
 	/// <summary>
-	/// IsEnabled will call this method.
+	/// Called whenever IsEnabled changes.
 	/// </summary>
-	protected override void OnDirty()
+	private void OnIsEnabledChanged( bool oldValue, bool newValue )
 	{
-		SetEnabled( IsEnabled );
+		if ( Active )
+			SetEnabled( newValue );
 	}
 
 	/// <summary>
@@ -99,37 +69,69 @@ public partial class LaserPointerComponent : Component, Component.ExecuteInEdito
 	}
 
 	/// <summary>
+	/// Creates a hidden, unsaved line renderer used to draw part of the laser.
+	/// </summary>
+	private LineRenderer CreateRenderer( float width, bool roundCaps )
+	{
+		var renderer = Components.Create<LineRenderer>();
+		renderer.Flags = ComponentFlags.NotSaved | ComponentFlags.Hidden;
+		renderer.UseVectorPoints = true;
+		renderer.Color = LaserColor;
+		renderer.Width = width;
+		renderer.Additive = true;
+		renderer.Opaque = false;
+		renderer.Lighting = false;
+		renderer.CastShadows = false;
+
+		if ( roundCaps )
+		{
+			renderer.StartCap = SceneLineObject.CapStyle.Rounded;
+			renderer.EndCap = SceneLineObject.CapStyle.Rounded;
+		}
+
+		return renderer;
+	}
+
+	/// <summary>
+	/// Updates the laser line and dot positions.
+	/// </summary>
+	private void UpdateRenderers()
+	{
+		if ( !LineRenderer.IsValid() && !DotRenderer.IsValid() )
+			return;
+
+		var end = GetTraceEnd();
+
+		if ( LineRenderer.IsValid() )
+		{
+			LineRenderer.VectorPoints = new() { WorldPosition, end };
+		}
+
+		if ( DotRenderer.IsValid() )
+		{
+			// A tiny segment with round caps reads as a dot.
+			var back = (WorldPosition - end).Normal * 0.01f;
+			DotRenderer.VectorPoints = new() { end + back, end + back * 2f };
+		}
+	}
+
+	/// <summary>
 	/// Turns on/off the laser pointer.
 	/// </summary>
 	/// <param name="enabled"></param>
 	public void SetEnabled( bool enabled )
 	{
-		if ( enabled )
-		{
-			LineParticleSystem?.Destroy();
-			DotParticleSystem?.Destroy();
+		LineRenderer?.Destroy();
+		DotRenderer?.Destroy();
+		LineRenderer = null;
+		DotRenderer = null;
 
-			if ( LineParticle is not null )
-			{
-				LineParticleSystem = Components.Create<LegacyParticleSystem>();
-				LineParticleSystem.Flags = ComponentFlags.NotSaved | ComponentFlags.Hidden;
-				LineParticleSystem.Particles = LineParticle;
-				LineParticleSystem.ControlPoints = LineCPs;
-			}
+		if ( !enabled )
+			return;
 
-			if ( DotParticle is not null )
-			{
-				DotParticleSystem = Components.Create<LegacyParticleSystem>();
-				DotParticleSystem.Flags = ComponentFlags.NotSaved | ComponentFlags.Hidden;
-				DotParticleSystem.Particles = DotParticle;
-				DotParticleSystem.ControlPoints = DotCPs;
-			}
-		}
-		else
-		{
-			LineParticleSystem?.Destroy();
-			DotParticleSystem?.Destroy();
-		}
+		LineRenderer = CreateRenderer( LineWidth, false );
+		DotRenderer = CreateRenderer( DotSize, true );
+		UpdateRenderers();
 	}
 
 	protected override void OnEnabled()
@@ -145,12 +147,7 @@ public partial class LaserPointerComponent : Component, Component.ExecuteInEdito
 
 	protected override void OnUpdate()
 	{
-		// Make sure we update the control points of both particle systems.
-		if ( LineParticleSystem.IsValid() )
-			LineParticleSystem.ControlPoints = LineCPs;
-
-		if ( DotParticleSystem.IsValid() )
-			DotParticleSystem.ControlPoints = DotCPs;
+		UpdateRenderers();
 
 		// Grab point input parsing.
 		if ( GrabPoint.IsValid() && GrabPoint.HeldHand.IsValid() )
@@ -160,8 +157,8 @@ public partial class LaserPointerComponent : Component, Component.ExecuteInEdito
 			{
 				TimeSinceToggled = 0;
 
+				// Toggling runs OnIsEnabledChanged, which turns the line and dot on/off.
 				IsEnabled ^= true;
-				SetEnabled( IsEnabled );
 			}
 		}
 	}

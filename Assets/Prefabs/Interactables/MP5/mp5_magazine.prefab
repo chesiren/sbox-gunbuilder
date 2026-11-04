@@ -164,6 +164,6 @@
   "ResourceVersion": 1,
   "__version": 1,
   "__references": [
-    "facepunch.v_mp5_magazine"
+    "facepunch.v_mp5_magazine#144168"
   ]
 }

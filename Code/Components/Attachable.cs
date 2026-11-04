@@ -65,11 +65,7 @@ public sealed class Attachable : Component
 	/// </summary>
 	internal void Detach()
 	{
-		if ( CurrentAttachmentPoint.TryDetach() )
-		{
-			Rigidbody.Velocity = 0;
-			Rigidbody.AngularVelocity = 0;
-		}
+		CurrentAttachmentPoint?.TryDetach();
 	}
 
 	/// <summary>
@@ -79,6 +75,17 @@ public sealed class Attachable : Component
 	internal void OnDetach( AttachmentPoint attachmentPoint )
 	{
 		Tags.Set( "attached", false );
+
+		// Hand physics back to the rigidbody, unless a hand is holding us (it manages motion itself).
+		if ( Rigidbody.IsValid() && !(Interactable?.IsHeld ?? false) )
+		{
+			Rigidbody.MotionEnabled = true;
+
+			// Inherit the motion of whatever we were attached to, so we don't drop dead straight while it moves.
+			var parentBody = attachmentPoint?.Interactable?.Rigidbody;
+			Rigidbody.Velocity = parentBody.IsValid() ? parentBody.Velocity : Vector3.Zero;
+			Rigidbody.AngularVelocity = parentBody.IsValid() ? parentBody.AngularVelocity : Vector3.Zero;
+		}
 
 		if ( DetachSound is not null )
 			Sound.Play( DetachSound, WorldPosition );

@@ -38,7 +38,7 @@
         "IsTrigger": false,
         "Scale": "3,1,4.5",
         "Static": false,
-        "Surface": "surfaces/metal.weapon.surface"
+        "Surface": "surfaces/metal.surface"
       },
       {
         "__type": "Attachable",
@@ -165,6 +165,6 @@
   "ResourceVersion": 1,
   "__version": 1,
   "__references": [
-    "facepunch.v_usp_magazine"
+    "facepunch.v_usp_magazine#144162"
   ]
 }

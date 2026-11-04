@@ -107,7 +107,7 @@ public partial class GrabPoint : Component, IGrabbable
 			return;
 		
 		Gizmo.Draw.Color = Color.Cyan.WithAlpha( 0.2f );
-		Gizmo.Draw.Model( "models/hands/human_hand_right.vmdl" );
+		Gizmo.Draw.Model( "models/first_person/hand_human_right.vmdl" );
 	}
 
 	/// <summary>

@@ -6,9 +6,14 @@
   "Schema": 1,
   "IncludeSourceFiles": false,
   "Resources": null,
+  "PublishUsedAssetsOnly": false,
   "PackageReferences": [],
   "EditorReferences": null,
-  "IsWhitelistDisabled": false,
+  "Mounts": null,
+  "IsStandaloneOnly": false,
+  "AI": {
+    "EnableMcpCommunication": true
+  },
   "Metadata": {
     "MaxPlayers": 64,
     "MinPlayers": 1,
@@ -22,7 +27,7 @@
     "PerMapRanking": false,
     "LeaderboardType": "None",
     "CsProjName": "",
-    "StartupScene": "scenes/minimal.scene",
+    "StartupScene": "scenes/shooting_range.scene",
     "ControlModes": {
       "VR": true
     }

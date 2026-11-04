@@ -1,0 +1,29 @@
+{
+  "guid": "2ab64036-89f3-4f7f-8792-cbfc543f133c",
+  "publish": {
+    "Enabled": false,
+    "ProjectConfig": {
+      "Title": "Shooting Range Target",
+      "Type": "material",
+      "Org": "local",
+      "Ident": "shooting_range_target",
+      "Schema": 0,
+      "IncludeSourceFiles": false,
+      "Resources": null,
+      "PublishUsedAssetsOnly": false,
+      "PackageReferences": null,
+      "EditorReferences": [
+        "facepunch.v_usp#84434"
+      ],
+      "Mounts": null,
+      "IsStandaloneOnly": false,
+      "AI": {
+        "EnableMcpCommunication": true
+      },
+      "Metadata": {
+        "SingleAssetSource": "textures/shooting_range_target.vmat"
+      }
+    },
+    "HammerAutoPackageReferences": null
+  }
+}
